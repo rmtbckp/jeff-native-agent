@@ -74,7 +74,11 @@ string jeff::get_method_name(jvmtiEnv &jvmti, jmethodID method) {
     check_jvmti_error(jvmti, error, "Unable to get method name");
 
     std::stringstream stream;
-    stream << type << "#" << name << ((gsig == NULL) ? sig : gsig);
+    // rmtbckp
+    string javaType = JNITypeToJavaType(type);
+    stream << javaType << "#" << name;
+    
+    // stream << type << "#" << name; //rmtbckp << ((gsig == NULL) ? sig : gsig);
 
     deallocate(jvmti, gsig);
     deallocate(jvmti, sig);
@@ -141,9 +145,63 @@ unique_ptr<Object> jeff::get_local_value(jvmtiEnv &jvmti, JNIEnv &jni, jthread t
             return Object::from(jvmti, jni, double_value);
         }
         case 'L': {  /* Object */
+            // TODO
+            /*
+            jobject object_value;
+            //printf("%s, ", object_value);
+            error = jvmti.GetLocalObject(thread, depth, slot, &object_value);
+            printf("%s, ", object_value);
+            std::cout << "Hello from C++ !!" << std::endl;
+            ASSERT_JVMTI_MSG(error, "Unable to get local value");
+            //auto ret = Object::from(jvmti, jni, object_value);
+            return Object::fromNothingTest(jvmti, jni, (jobject) nullptr);
+            */
+            
             jobject object_value;
             error = jvmti.GetLocalObject(thread, depth, slot, &object_value);
             ASSERT_JVMTI_MSG(error, "Unable to get local value");
+            if(object_value == nullptr) {
+                string signature("Object");
+                string as_string("null");
+                auto ret = Object::fromDummy(jvmti, jni, signature, as_string);
+                // jni.DeleteLocalRef(object_value);
+                return ret;
+            }
+            // rmtbckp test: get Object fields value
+            // rmtbckp: has been moved to Object::from(jvmti, jni, object_value);
+            /*
+            jclass cls = jni.GetObjectClass(object_value);
+            string str2 ("Lcom/antoniaklja/sample/Main$Pet;");
+            if (str2.compare(signature) == 0) {
+                //printf("AAAAAAAAAAAAAAAAAAAAAAAAAA\n");
+                jfieldID fidInt = jni.GetFieldID(cls, "age", "I");
+                jint iVal = jni.GetIntField(object_value, fidInt);
+                printf("age = %d\n", iVal);
+                
+                fidInt = jni.GetFieldID(cls, "weight", "I");
+                iVal = jni.GetIntField(object_value, fidInt);
+                printf("weight = %d\n", iVal);
+            }
+            */
+            //jfieldID fidInt = jni.GetFieldID(cls, "age", "I");
+            //jint iVal = jni.GetIntField(object_value, fidInt);
+            //printf("iVal: %d\n", iVal);
+            
+            // rmtbckp Test: get class name
+            /* jclass cls = jni.GetObjectClass(object_value);
+            //printf("jclass cls = %s, ", cls);
+            //jmethodID mid_getName = jni.GetMethodID(cls, "getName", "()Ljava/lang/String;");
+            //jstring strObj = (jstring)jni.CallObjectMethod(cls, mid_getName);
+            
+            jclass ccls = jni.FindClass("java/lang/Class");
+            jmethodID mid_getName = jni.GetMethodID(ccls, "getName", "()Ljava/lang/String;");
+            jstring strObj = (jstring)jni.CallObjectMethod(cls, mid_getName);
+            //printf("jstring cls = %s, ", strObj);
+            const char* localName = jni.GetStringUTFChars(strObj, 0);
+            printf("Object class = %s\n", localName);
+            jni.ReleaseStringUTFChars(strObj, localName);
+            */
+            // End rmtbckp Test
             auto ret = Object::from(jvmti, jni, object_value);
             jni.DeleteLocalRef(object_value);
             return ret;
@@ -199,8 +257,16 @@ list<string> jeff::get_method_local_variables(jvmtiEnv &jvmti, JNIEnv &jni, jthr
     check_jvmti_error(jvmti, error, "Unable to get local varable table");
 
     list<string> arguments;
+    // rmtbckp
+    //printf("\nSize from jvmti.GetLocalVariableTable = %d\n", size);
+    //printf("Limit from jeff::get_method_local_variables= %d\n", limit);
     auto entry = entries;
-    for (int i = 0; i < min(size, limit); ++i, entry++) {
+    // rmtbckp: we want all local variables, not get_method_arguments_size
+    // for (int i = 0; i < min(size, limit); ++i, entry++) {
+    int doubleOrLongSlots = 0;
+    //string D ("double");
+    //string L ("long");
+    for (int i = 0; i < (int) size; ++i, entry++) {
         string name = string(entry->name);
         string signature = entry->signature;
         int slot = entry->slot;
@@ -208,7 +274,18 @@ list<string> jeff::get_method_local_variables(jvmtiEnv &jvmti, JNIEnv &jni, jthr
         unique_ptr<Object> value = get_local_value(jvmti, jni, thread, depth, slot, signature);
 
         string to_string = value->toString();
-        arguments.push_back((format("%s [%s] '%s'") % name % slot % to_string).str());
+        // rmtbckp
+        //arguments.push_back((format("%s\n") % signature).str());
+        //arguments.push_back((format("%s [%s] '%s'\n") % name % slot % to_string).str());
+        //arguments.push_back((format("%s %s [%s] = '%s'\n") % signature % name % slot % to_string).str());
+        
+        // rmtbckp
+        if(signature.c_str()[0] == 'D' || signature.c_str()[0] == 'J') doubleOrLongSlots++;
+        //printf("%d, ", doubleOrLongSlots);
+        //printf("%c, ", signature.c_str()[0]);
+        string methodParamOrLocalVar = i < (limit-doubleOrLongSlots) ? std::string("Method parameter:") : std::string("Local variable:");
+        auto javaType = JNITypeToJavaType(signature);
+        arguments.push_back((format("\n\t\t%s %s %s = '%s'") % methodParamOrLocalVar % javaType % name % to_string).str());
 
         deallocate(jvmti, entry->generic_signature);
         deallocate(jvmti, entry->signature);
@@ -232,7 +309,9 @@ list<string> jeff::get_method_arguments(jvmtiEnv &jvmti, JNIEnv &jni, jthread th
     list<string> lines;
     int size = get_method_arguments_size(jvmti, method);
     list<string> variables = get_method_local_variables(jvmti, jni, thread, method, size, depth);
-    size = min(size, (int) variables.size());
+    // rmtbckp: we want all local variables, not get_method_arguments_size
+    // size = min(size, (int) variables.size());
+    size = (int) variables.size();
     for (size_t i = 0; i < size; i++) {
         lines.push_back(variables.front());
         variables.pop_front();
@@ -336,7 +415,7 @@ list<string> jeff::get_stack_trace(jvmtiEnv &jvmti, JNIEnv &jni, jthread thread,
         auto join_lines = [](string a, string b) { return a + ", " + b; };
         string arguments_values = join(args, join_lines);
 
-        auto line = boost::format("%s%s") % method_name % arguments_values;
+        auto line = boost::format("at %s%s") % method_name % arguments_values;
         lines.push_back(line.str());
     }
 

@@ -20,5 +20,7 @@ namespace jeff {
     std::wstring L(const std::string &str);
 
     std::string S(const std::wstring &str);
+    
+    std::string JNITypeToJavaType(std::string signature);
 }
 #endif //JEFF_NATIVE_AGENT_COMMON_H

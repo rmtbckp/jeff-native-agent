@@ -35,6 +35,10 @@ public:
     static std::unique_ptr<Object> from(jvmtiEnv &jvmti, JNIEnv &jni, jarray array, std::string signature);
 
     static std::unique_ptr<Object> from(jvmtiEnv &jvmti, JNIEnv &jni, jobject object);
+    
+    static std::unique_ptr<Object> fromNothingTest(jvmtiEnv &jvmti, JNIEnv &jni, jobject object);
+    
+    static std::unique_ptr<Object> fromDummy(jvmtiEnv &jvmti, JNIEnv &jni, std::string signature, std::string as_string);
 
     static std::unique_ptr<Object> from(jvmtiEnv &jvmti, JNIEnv &jni, bool value);
 

@@ -74,6 +74,45 @@ jobject jeff::call_method(JNIEnv &jni, jobject &object, jmethodID methodID, ...)
     return result;
 }
 
+// rmtbckp
+jobjectArray jeff::call_method_jobjectArray(JNIEnv &jni, jobject &object, const string methodName,
+                          const string methodSignature, ...) {
+    jclass type = get_object_class(jni, object);
+    jmethodID methodID = get_method_id(jni, type, methodName, methodSignature);
+    delete_local_ref(jni, type);
+
+    va_list args;
+    jobjectArray result;
+    va_start(args, methodSignature);
+    result = call_method_jobjectArray(jni, object, methodID, args);
+    va_end(args);
+
+    return result;
+}
+
+jobjectArray jeff::call_method_jobjectArray(JNIEnv &jni, jobject &object, jmethodID methodID, ...) {
+    va_list args;
+    jobjectArray result;
+    va_start(args, methodID);
+    result = (jobjectArray)jni.CallObjectMethodV(object, methodID, args);
+
+    ASSERT_MSG(!jni.ExceptionCheck(), "Unable to call method");
+    va_end(args);
+    return result;
+}
+
+/*jobjectArray jeff::call_method_array(JNIEnv &jni, jobject &object, jmethodID methodID, ...) {
+    va_list args;
+    jobjectArray result;
+    va_start(args, methodID);
+    result = (jobjectArray)jni.CallObjectMethodV(object, methodID, args);
+
+    ASSERT_MSG(!jni.ExceptionCheck(), "Unable to call method");
+    va_end(args);
+    return result;
+}*/
+//
+
 string jeff::to_string(JNIEnv &jni, jstring str) {
     // Convert to native char array
     const char *chars = jni.GetStringUTFChars(str, JNI_FALSE);
