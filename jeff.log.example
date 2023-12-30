@@ -1,0 +1,51 @@
+The agent init phase successful
+VM Started (JVMTI_EVENT_VM_START)
+The JEFF agent is live.
+VMInit thread 'main' (JVMTI_EVENT_VM_INIT)
+
+testMethod parameters: test string1 123 234 127 true null
+Trying methodParam1_String.length() with methodParam1_String=test string1
+Length = 12
+Trying methodParam6_String.length() with methodParam6_String=null
+stackSize = 3
+Uncaught exception: Ljava/lang/NullPointerException;, message: ''
+	in method: com.rmtbckp.sample.Main#testMethod
+Stack trace:
+	at com.rmtbckp.sample.Main.testMethod(Main.java:41)
+	at com.rmtbckp.sample.Main.testIntermediateMethodWithOtherVariable(Main.java:25)
+	at com.rmtbckp.sample.Main.main(Main.java:19)
+
+Stack trace values:			
+	at com.rmtbckp.sample.Main#testMethod, 
+		Method parameter: java.lang.String methodParam1_String = 'test string1', 
+		Method parameter: int methodParam2_int = '4444', 
+		Method parameter: long methodParam3_long = '234', 
+		Method parameter: byte methodParam4_byte = '127', 
+		Method parameter: boolean methodParam5_boolean = 'true', 
+		Method parameter: java.lang.String methodParam6_String = 'null', 
+		Local variable: com.rmtbckp.sample.Main$Pet myPet = 'com.rmtbckp.sample.Main$Pet@2d554825,
+			age = 4,
+			weight = 10', 
+		Local variable: int hjk = '10', 
+		Local variable: int length = '12'
+	at com.rmtbckp.sample.Main#testIntermediateMethodWithOtherVariable, 
+		Method parameter: java.lang.String test1 = 'test string1', 
+		Method parameter: int test2 = '123', 
+		Method parameter: long test3 = '234', 
+		Method parameter: byte test4 = '127', 
+		Method parameter: boolean test5 = 'true', 
+		Method parameter: java.lang.String test6 = 'null', 
+		Local variable: int foo = '4', 
+		Local variable: boolean bar = 'false'
+	at com.rmtbckp.sample.Main#main, 
+		Method parameter: Unknown type args = '[not implemented yet]', 
+		Local variable: java.lang.String test1 = 'test string1', 
+		Local variable: java.lang.String test6 = 'null', 
+		Local variable: int test2 = '123', 
+		Local variable: long test3 = '234', 
+		Local variable: byte test4 = '127', 
+		Local variable: boolean test5 = 'true'
+
+
+VM Died (JVMTI_EVENT_VM_DEATH)
+
