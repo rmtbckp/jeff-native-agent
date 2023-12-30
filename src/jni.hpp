@@ -37,6 +37,13 @@ namespace jeff {
                               const std::string methodSignature, ...);
 
     jobject call_method(JNIEnv &jni, jobject &object, jmethodID methodID, ...);
+    
+    // rmtbckp
+    jobjectArray call_method_jobjectArray(JNIEnv &jni, jobject &object, const std::string methodName,
+                          const std::string methodSignature, ...);
+    jobjectArray call_method_jobjectArray(JNIEnv &jni, jobject &object, jmethodID methodID, ...);
+    /*jobjectArray call_method_array(JNIEnv &jni, jobject &object, jmethodID methodID, ...);*/
+    //
 
     std::string to_string(JNIEnv &jni, jstring str);
 

@@ -40,6 +40,17 @@ jint get_jvmti(JavaVM *jvm, jvmtiEnv **jvmti) {
                                            " JNIEnv's GetEnv() returned %d\n") % JVMTI_VERSION_1_2 % result;
         return JNI_ERR;
     }
+    void* jniEnv;
+    jint status = jvm->GetEnv(&jniEnv, JNI_VERSION_1_6);
+    if (result != JNI_OK) {
+        /* This means that the VM was unable to obtain this version of the
+         *   JVMTI interface, this is a fatal error.
+         */
+        std::cerr << boost::format("ERROR: Unable to access JVMTI Version 1.2 (0x%x),"
+                                           " is your JDK a 6.0 or newer version?"
+                                           " JNIEnv's GetEnv() returned %d\n") % JVMTI_VERSION_1_2 % result;
+        return JNI_ERR;
+    }
     return JNI_OK;
 }
 
@@ -237,6 +248,7 @@ void JNICALL MethodEntryCallback(jvmtiEnv *jvmti,
                                  JNIEnv *jni,
                                  jthread thread,
                                  jmethodID method) {
+    printf("BBBBBBBBBBB");
     string methodName = get_method_name(*jvmti, method);
     std::cout << boost::format("Enter Method: %s\n") % methodName;
 }
@@ -270,15 +282,39 @@ void JNICALL ExceptionCallback(jvmtiEnv *jvmti,
         return (result == nullptr) ? "" : jeff::to_string(*jni, static_cast<jstring>(result));
     };
     string message = call_method(*jni, exception, "getMessage", "()Ljava/lang/String;", string_transformer);
+    //printf("message %s\n", message);
+    
+    // rmtbckp
+    jobjectArray resultArrays = call_method_jobjectArray(*jni, exception, "getStackTrace", "()[Ljava/lang/StackTraceElement;");
+    jint stackSize = jni->GetArrayLength(resultArrays);
+    printf("stackSize = %d\n", stackSize);
+    string usualStacktrace("");
+    for(int i = 0; i < (int) stackSize; i++) {
+        jobject stackTraceElement = jni->GetObjectArrayElement(resultArrays, i);
+        //string message = call_method(*jni, stackTraceElement, "toString", "()Ljava/lang/String;", string_transformer);
+        jobject stackTraceElementToStringjobject = call_method(*jni, stackTraceElement, "toString", "()Ljava/lang/String;");
+        string stackTraceElementToString = jeff::to_string(*jni, static_cast<jstring>(stackTraceElementToStringjobject));
+        //printf("stack element %s", stackTraceElementToString);
+        //cout << "at " << stackTraceElementToString << "\n";
+        usualStacktrace = usualStacktrace + "\tat " + stackTraceElementToString + "\n";
+    }
+    //printf("\n");
+    //
 
     string line = get_location(*jvmti, method, location);
 
     auto join_lines = [](string a, string b) { return "\t" + a + "\n\t" + b; };
     string stack_trace = join(get_stack_trace(*jvmti, *jni, thread), join_lines);
 
+    // rmtbckp
+    /*
     std::string the_message =
-            (boost::format("Uncought exception: %s, message: '%s'\n\tin method: %s [%s]\nStack trace:%s\n\n")
+            (boost::format("Uncaught exception: %s, message: '%s'\n\tin method: %s [%s]\nStack trace:%s\n\n")
              % exceptionSignature % message % methodName % line % stack_trace).str();
+    */         
+    std::string the_message =
+            (boost::format("Uncaught exception: %s, message: '%s'\n\tin method: %s\nStack trace:\n%s\nStack trace values:%s\n\n")
+             % exceptionSignature % message % methodName % usualStacktrace % stack_trace).str();
 
     gdata.sender->send(the_message);
 }
@@ -302,7 +338,7 @@ void JNICALL ExceptionCatchCallback(jvmtiEnv *jvmti,
     string line = get_location(*jvmti, method, location);
 
     std::string the_message =
-            (boost::format("Cought exception: %s, message: '%s'\n\tin method: %s [%s]\n")
+            (boost::format("Caught exception: %s, message: '%s'\n\tin method: %s [%s]\n")
              % exceptionSignature % message % methodName % line).str();
 
     gdata.sender->send(the_message);

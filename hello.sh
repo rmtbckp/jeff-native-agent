@@ -41,7 +41,8 @@ done
 
 if [ ${MAVEN} == YES ]; then
     echo "Building jeff-hello project..."
-    (cd jeff-hello && mvn clean install package >> /dev/null)
+    # (cd jeff-hello && mvn clean install package >> /dev/null)
+    (cd jeff-hello && mvn clean install package)
 fi
 
 
@@ -74,7 +75,8 @@ fi
 # - JNI debugging
 # - JVM TI native agent
 # - the program to run
-${VALGRIND_COMMAND} java -showversion \
+# ${VALGRIND_COMMAND} java -showversion \
+${VALGRIND_COMMAND} java \
     -XX:+UseCompressedOops \
     -XX:+TieredCompilation -XX:TieredStopAtLevel=1 \
     -agentpath:${JEFF_PATH} \

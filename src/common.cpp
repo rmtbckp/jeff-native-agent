@@ -38,6 +38,45 @@ string jeff::S(const wstring &str) {
     std::use_facet<std::ctype<wchar_t> >(loc).narrow(from, from + len, '_', &buffer[0]);
     return string(&buffer[0], &buffer[len]);
 }
+
+string jeff::JNITypeToJavaType(string signature) {
+    switch (signature.c_str()[0]) {
+        case 'Z': {  /* boolean */
+            string value("boolean");
+            return value;
+        }
+        case 'B': {  /* byte */
+            return std::string("byte");
+        }
+        case 'C': {  /* char */
+            return std::string("char");
+        }
+        case 'S': {  /* short */
+            return std::string("short");
+        }
+        case 'I': {  /* int */
+            return std::string("int");
+        }
+        case 'J': {  /* long */
+            return std::string("long");
+        }
+        case 'F': {  /* float */
+            return std::string("float");
+        }
+        case 'D': {  /* double */
+            return std::string("double");
+        }
+        case 'L': {  /* Object */
+            signature = signature.substr(1, signature.size() - 2);
+            std::replace( signature.begin(), signature.end(), '/', '.');
+            return signature;
+        }
+        default: {
+            return std::string("Unknown type");
+        }
+        
+    }
+}
 /*
 inline string jeff::S(const wstring &str) {
     string ret;

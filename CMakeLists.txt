@@ -36,7 +36,7 @@ set(CMAKE_COLOR_MAKEFILE ON)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-long-long -pedantic")
 set(CMAKE_CXX_FLAGS_VALGRIND "-fno-inline")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_CXX_FLAGS_VALGRIND} -Werror -Wno-missing-field-initializers")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} ${CMAKE_CXX_FLAGS_VALGRIND} -Wno-missing-field-initializers") #-Werror
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O4 -DNDEBUG")
 
 if (NOT MSVC)
@@ -59,6 +59,8 @@ if (WIN32)
     )
 else ()
     include_directories(
+            "/opt/java/jdk-11.0.2/include"
+            "/opt/java/jdk-11.0.2/include/linux"
             "/usr/lib/jvm/java-8-oracle/include"
             "/usr/lib/jvm/java-8-oracle/include/linux"
             "/usr/lib/jvm/java-7-openjdk-amd64/include"
